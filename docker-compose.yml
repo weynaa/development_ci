@@ -1,0 +1,86 @@
+version: "3.5"
+services:
+  gitlab:
+    container_name: gitlab
+    image: gitlab/gitlab-ce:latest
+    hostname: gitlab
+    ports:
+      - 22:22
+      - 80:80
+      - 443:443
+    volumes:
+      - /config:/etc/gitlab
+      - /logs:/var/log/gitlab
+      - /data:/var/opt/gitlab
+    networks:
+      jenkins:
+  artifactory:
+    container_name: artifactory
+    image: docker.bintray.io/jfrog/artifactory-cpp-ce:latest
+    hostname: artifactory
+    ports:
+      - 8081:8081
+      - 8082:8082
+    volumes:
+      - artifactory_data:/var/opt/jfrog/artifactory
+    networks:
+      jenkins:
+  jenkins-docker:
+    container_name: jenkins-docker
+    image: docker:dind
+    networks: 
+      jenkins:
+        aliases: 
+          - docker
+    hostname: jenkins
+    privileged: True
+    environment: 
+      - DOCKER_TLS_CERTDIR=/certs
+    volumes:
+      - jenkins-docker-certs:/certs/client
+      - jenkins-data:/var/jenkins_home
+  jenkins-master:
+    container_name: jenkins-master
+    hostname: jenkins-master
+    build:
+      context: ./jenkins-image
+    networks:
+      jenkins:
+    environment:
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+    ports:
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client:ro
+  jenkins-linux-agent:
+    container_name: jenkins-linux-agent
+    hostname: jenkins-linux-x64
+    build:
+      context: ./jenkins-linux-image
+    networks:
+      jenkins:
+  gitlab-runner-docker:
+    container_name: gitlab-runner-docker
+    hostname: gitlab-runner-docker
+    depends_on:
+      - gitlab
+    build:
+      context: ./gitlab-runner-docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      jenkins:
+volumes:
+  artifactory_data:
+    driver: local
+  jenkins-docker-certs:
+    driver: local
+  jenkins-data:
+    driver: local
+networks:
+  jenkins:
+      
