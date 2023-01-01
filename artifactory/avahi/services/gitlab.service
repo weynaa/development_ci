@@ -1,0 +1,4 @@
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+	<name replace-wildcards="yes">Artifactory CE</name>
+</service-group>
