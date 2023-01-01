@@ -1,8 +1,7 @@
 #!/bin/bash
 
-service dbus start
+service dbus start &> /dev/null
 
-echo "running" "$@"
-avahi-daemon --no-drop-root --no-rlimits & /entrypoint "$@"  
+(avahi-daemon --no-drop-root --no-rlimits &> /dev/null) & /entrypoint "$@"  
 
 
